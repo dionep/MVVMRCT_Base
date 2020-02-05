@@ -5,10 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mvvmrct_base.Screens
 import com.example.mvvmrct_base.entity.TodoModel
-import com.example.mvvmrct_base.model.Either
+import com.example.mvvmrct_base.model.Result
 import com.example.mvvmrct_base.model.repository.MainRepository
 import com.example.mvvmrct_base.model.system.FlowRouter
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,20 +17,11 @@ class MainViewModel @Inject constructor(
     private val flowRouter: FlowRouter
 ) : ViewModel() {
 
-    val postsLiveData = MutableLiveData<List<TodoModel>>()
-    val errorHandler = MutableLiveData<Throwable>()
-    val loadingLiveData = MutableLiveData<Boolean>()
+    val postsLiveData = MutableLiveData<Result<List<TodoModel>>>()
 
     fun loadPosts() {
         viewModelScope.launch {
-            flowOf(mainRepository.getPosts())
-                .onStart { loadingLiveData.value = true }
-                .onCompletion { loadingLiveData.value = false }
-                .collect {
-                    when (it) {
-                        is Either.Success -> postsLiveData.value = it.data
-                    }
-                }
+            mainRepository.getPosts().collect { postsLiveData.value = it }
         }
     }
 

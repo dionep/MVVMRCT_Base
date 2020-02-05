@@ -1,15 +1,13 @@
 package com.example.mvvmrct_base.utils
 
-import com.example.mvvmrct_base.model.Either
-import retrofit2.Response
-import java.lang.Exception
+import com.example.mvvmrct_base.model.Result
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
 
-fun <T> Response<T>.getEither(): Either<T> {
-    try {
-        this.body()?.let {
-            return Either.Success(it)
-        } ?: return Either.Error(Exception("Data is Null"))
-    } catch (e: Throwable) {
-        return Either.Error(e)
-    }
-}
+fun <T: Any> Flow<Result<T>>.applySideEffects() =
+    onStart { emit(Result.Progress(isLoading = true)) }
+        .onCompletion { emit(Result.Progress(isLoading = false)) }
+        .catch { emit(Result.Error(it)) }
+
